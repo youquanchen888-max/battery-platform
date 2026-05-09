@@ -1,74 +1,213 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import * as XLSX from 'xlsx'
-import { parseBatteryData } from '../utils/parser'
+import { parseBatteryFile } from '../utils/parser'
+import { detectAvailableCharts } from '../utils/chartSelector'
 import { calculateDQDV } from '../utils/dqdv'
+import { movingAverage } from '../utils/smoothing'
+import { removeOutliers } from '../utils/outlierRemoval'
 
+import ChartErrorBoundary from './ChartErrorBoundary'
+import SheetSelector from './SheetSelector'
+import DetectionSummary from './DetectionSummary'
+import ChartSelectorPanel from './ChartSelectorPanel'
+import ManualColumnMapper from './ManualColumnMapper'
+import AdvancedSettings from './AdvancedSettings'
 import CyclePerformanceChart from './CyclePerformanceChart'
 import VoltageCapacityChart from './VoltageCapacityChart'
 import DQDVChart from './DQDVChart'
+import GCDChart from './GCDChart'
+import CVChart from './CVChart'
+import EISChart from './EISChart'
 import ExportButtons from './ExportButtons'
 
 export default function BatteryResearchApp() {
-  const [data, setData] = useState([])
+  const [rawData, setRawData] = useState([])
+  const [processedData, setProcessedData] = useState([])
   const [dqdvData, setDQDVData] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [metadata, setMetadata] = useState(null)
+  const [availableCharts, setAvailableCharts] = useState({})
+  const [selectedCharts, setSelectedCharts] = useState({})
+  const [manualMapping, setManualMapping] = useState({})
+  const [smoothingEnabled, setSmoothingEnabled] = useState(false)
+  const [outlierRemovalEnabled, setOutlierRemovalEnabled] = useState(false)
   const [error, setError] = useState('')
+
+  const [sheetNames, setSheetNames] = useState([])
+  const [currentSheet, setCurrentSheet] = useState('')
+  const [workbook, setWorkbook] = useState(null)
+  const [uploadKey, setUploadKey] = useState(0)
+
+  // 数据处理联动
+  useEffect(() => {
+    if (!rawData.length) return
+    let updated = [...rawData]
+    try {
+      if (outlierRemovalEnabled) updated = removeOutliers(updated, 'capacity')
+      if (smoothingEnabled) updated = movingAverage(updated, 'capacity', 5)
+    } catch (e) { console.error(e) }
+    setProcessedData(updated)
+  }, [rawData, smoothingEnabled, outlierRemovalEnabled])
+
+  // dQ/dV 联动
+  useEffect(() => {
+    if (availableCharts.dqdv && processedData.length > 0) {
+      const valid = processedData.filter(d => d.voltage != null && d.capacity != null)
+      if (valid.length > 0) setDQDVData(calculateDQDV(valid))
+    }
+  }, [processedData, availableCharts.dqdv])
+
+  const analyzeSheet = useCallback((sheetName) => {
+    if (!workbook) return
+    setError('')
+    try {
+      const result = parseBatteryFile(workbook, sheetName)
+      setRawData(result.data)
+      setMetadata(result)
+      setCurrentSheet(sheetName)
+
+      const charts = detectAvailableCharts(result.detected)
+      setAvailableCharts(charts)
+      setSelectedCharts({
+        cyclePerformance: charts.cyclePerformance || false,
+      })
+    } catch (e) {
+      setError(e.message)
+    }
+  }, [workbook])
 
   const handleUpload = (e) => {
     const file = e.target.files[0]
     if (!file) return
 
-    // 文件大小限制
-    if (file.size > 50 * 1024 * 1024) {
-      setError('文件过大，请上传小于 50MB 的文件')
-      return
-    }
-
-    setLoading(true)
+    setRawData([])
+    setProcessedData([])
+    setMetadata(null)
+    setAvailableCharts({})
+    setSelectedCharts({})
     setError('')
-    const reader = new FileReader()
+    setSheetNames([])
+    setCurrentSheet('')
+    setWorkbook(null)
 
+    const reader = new FileReader()
     reader.onload = (evt) => {
       try {
-        const workbook = XLSX.read(evt.target.result, { type: 'binary' })
-        const sheet = workbook.Sheets[workbook.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json(sheet)
-
-        const parsed = parseBatteryData(jsonData)
-        setData(parsed)
-        setDQDVData(calculateDQDV(parsed))
+        const binaryData = evt.target.result
+        setWorkbook(binaryData)
+        const wb = XLSX.read(binaryData, { type: 'binary' })
+        const names = wb.SheetNames
+        setSheetNames(names)
+        if (names.length > 0) {
+          analyzeSheet(names[0])
+        } else {
+          setError('文件中未找到工作表')
+        }
       } catch (err) {
-        setError('文件解析失败：' + err.message)
-      } finally {
-        setLoading(false)
+        setError('文件读取失败：' + err.message)
       }
     }
-
-    reader.onerror = () => {
-      setError('文件读取失败')
-      setLoading(false)
-    }
-
+    reader.onerror = () => setError('文件读取失败')
     reader.readAsBinaryString(file)
+
+    setUploadKey(prev => prev + 1)
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>论文级电池科研绘图分析平台</h1>
+    <div style={{ maxWidth: 1600, margin: '0 auto', padding: 30, fontFamily: 'Arial, sans-serif', background: '#fff' }}>
+      <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 20 }}>论文级电池科研绘图平台</h1>
 
-      <input type="file" accept=".xlsx,.xls,.csv" onChange={handleUpload} />
+      <input
+        key={uploadKey}
+        type="file"
+        accept=".xlsx,.xls,.csv"
+        onChange={handleUpload}
+        style={{ marginBottom: 20 }}
+      />
 
-      {loading && <p>正在处理数据，请稍候...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {sheetNames.length > 1 && (
+        <SheetSelector sheets={sheetNames} selectedSheet={currentSheet} setSelectedSheet={analyzeSheet} />
+      )}
 
-      {data.length > 0 && (
+      {error && <p style={{ color: '#d32f2f' }}>{error}</p>}
+
+      {/* 初始提示 */}
+      {!rawData.length && !error && (
+        <div style={{ marginTop: 30, padding: 20, background: '#f5f5f5', borderRadius: 8, fontSize: 16 }}>
+          <p style={{ margin: 0, fontWeight: 600, marginBottom: 8 }}>📂 支持上传的文件格式：</p>
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            <li>Excel 工作簿 (.xlsx, .xls)</li>
+            <li>CSV 逗号分隔文件 (.csv)</li>
+            <li>蓝电 / Neware 等电池测试系统直接导出的文件</li>
+          </ul>
+          <p style={{ marginTop: 12, marginBottom: 0 }}>上传后系统将自动识别 Sheet 和数据列，并生成论文级图表。</p>
+        </div>
+      )}
+
+      {metadata && (
         <>
-          <CyclePerformanceChart data={data} />
-          <VoltageCapacityChart data={data} />
-          <DQDVChart data={dqdvData} />
-          <ExportButtons />
+          <DetectionSummary metadata={metadata} charts={availableCharts} />
+          <ManualColumnMapper columns={metadata.columns} mapping={manualMapping} setMapping={setManualMapping} />
         </>
       )}
+
+      {Object.keys(availableCharts).length > 0 && (
+        <ChartSelectorPanel
+          availableCharts={availableCharts}
+          selectedCharts={selectedCharts}
+          setSelectedCharts={setSelectedCharts}
+        />
+      )}
+
+      {metadata && (
+        <AdvancedSettings
+          smoothingEnabled={smoothingEnabled}
+          setSmoothingEnabled={setSmoothingEnabled}
+          outlierRemovalEnabled={outlierRemovalEnabled}
+          setOutlierRemovalEnabled={setOutlierRemovalEnabled}
+        />
+      )}
+
+      {processedData.length > 0 && (
+        <>
+          {selectedCharts.cyclePerformance && (
+            <ChartErrorBoundary>
+              <CyclePerformanceChart data={processedData} />
+            </ChartErrorBoundary>
+          )}
+
+          {selectedCharts.voltageCapacity && (
+            <ChartErrorBoundary>
+              <VoltageCapacityChart data={processedData} />
+            </ChartErrorBoundary>
+          )}
+
+          {selectedCharts.dqdv && dqdvData.length > 0 && (
+            <ChartErrorBoundary>
+              <DQDVChart data={dqdvData} />
+            </ChartErrorBoundary>
+          )}
+
+          {selectedCharts.gcd && (
+            <ChartErrorBoundary>
+              <GCDChart data={processedData} />
+            </ChartErrorBoundary>
+          )}
+
+          {selectedCharts.cv && (
+            <ChartErrorBoundary>
+              <CVChart data={processedData} />
+            </ChartErrorBoundary>
+          )}
+
+          {selectedCharts.eis && (
+            <ChartErrorBoundary>
+              <EISChart data={processedData} />
+            </ChartErrorBoundary>
+          )}
+        </>
+      )}
+
+      {processedData.length > 0 && <ExportButtons />}
     </div>
   )
 }

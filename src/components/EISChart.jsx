@@ -1,24 +1,28 @@
 import React from 'react'
 import {
-  LineChart, Line, XAxis, YAxis,
+  ScatterChart, Scatter, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer
+  ResponsiveContainer, ZAxis
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
 
-export default function VoltageCapacityChart({ data = [] }) {
+export default function EISChart({ data = [] }) {
   const validData = Array.isArray(data)
-    ? data.filter(d => d.capacity != null && d.voltage != null)
+    ? data.filter(d => d.zReal != null && d.zImag != null)
+        .map(d => ({
+          zReal: Number(d.zReal),
+          zImag: Number(d.zImag) > 0 ? -Number(d.zImag) : Number(d.zImag),
+        }))
     : []
 
-  if (validData.length === 0) return <p>无有效数据用于绘制电压-容量曲线</p>
+  if (validData.length === 0) return <p>无有效数据用于绘制 EIS Nyquist 图</p>
 
   const axisLine = { stroke: '#000', strokeWidth: 1.2 }
   const tickStyle = { fontSize: 12, fill: '#000' }
 
   return (
     <div
-      id="voltage-chart"
+      id="eis-chart"
       style={{
         marginTop: 30,
         background: '#fff',
@@ -45,49 +49,47 @@ export default function VoltageCapacityChart({ data = [] }) {
       </svg>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-        <h2 style={{ margin: 0 }}>电压 - 容量曲线</h2>
+        <h2 style={{ margin: 0 }}>EIS Nyquist 图</h2>
         <div>
-          <button onClick={() => exportPNG('voltage-chart', 'voltage')}>PNG</button>
-          <button onClick={() => exportSVG('voltage-chart', 'voltage')}>SVG</button>
+          <button onClick={() => exportPNG('eis-chart', 'eis')}>PNG</button>
+          <button onClick={() => exportSVG('eis-chart', 'eis')}>SVG</button>
         </div>
       </div>
 
       <ResponsiveContainer width="100%" height={400}>
-        <LineChart
-          data={validData}
+        <ScatterChart
           margin={{ top: 20, right: 30, left: 30, bottom: 20 }}
         >
-          <CartesianGrid stroke="#e0e0e0" strokeDasharray="2 2" vertical={false} />
+          <CartesianGrid stroke="#e0e0e0" strokeDasharray="2 2" />
 
           <XAxis
-            dataKey="capacity"
+            dataKey="zReal"
             type="number"
+            name="Z'"
+            unit="Ω"
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '容量 (mAh/g)', position: 'insideBottomRight', offset: -5, style: { fontSize: 13 } }}
+            label={{ value: "Z' (Ω)", position: 'insideBottomRight', offset: -5, style: { fontSize: 13 } }}
           />
 
           <YAxis
+            dataKey="zImag"
             type="number"
+            name='-Z"'
+            unit="Ω"
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '电压 (V)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 13 } }}
+            label={{ value: '-Z" (Ω)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 13 } }}
           />
 
-          <Tooltip />
+          <ZAxis range={[60, 60]} />
+          <Tooltip cursor={{ strokeDasharray: '3 3' }} />
           <Legend wrapperStyle={{ fontSize: 13 }} />
 
-          <Line
-            type="monotone"
-            dataKey="voltage"
-            stroke="#2ca02c"
-            strokeWidth={2}
-            dot={false}
-            name="电压"
-          />
-        </LineChart>
+          <Scatter name="样品" data={validData} fill="#8884d8" />
+        </ScatterChart>
       </ResponsiveContainer>
     </div>
   )

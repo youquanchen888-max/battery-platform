@@ -6,19 +6,19 @@ import {
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
 
-export default function VoltageCapacityChart({ data = [] }) {
+export default function GCDChart({ data = [] }) {
   const validData = Array.isArray(data)
     ? data.filter(d => d.capacity != null && d.voltage != null)
     : []
 
-  if (validData.length === 0) return <p>无有效数据用于绘制电压-容量曲线</p>
+  if (validData.length === 0) return <p>无有效数据用于绘制 GCD 充放电曲线</p>
 
   const axisLine = { stroke: '#000', strokeWidth: 1.2 }
   const tickStyle = { fontSize: 12, fill: '#000' }
 
   return (
     <div
-      id="voltage-chart"
+      id="gcd-chart"
       style={{
         marginTop: 30,
         background: '#fff',
@@ -45,10 +45,10 @@ export default function VoltageCapacityChart({ data = [] }) {
       </svg>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-        <h2 style={{ margin: 0 }}>电压 - 容量曲线</h2>
+        <h2 style={{ margin: 0 }}>GCD 充放电曲线</h2>
         <div>
-          <button onClick={() => exportPNG('voltage-chart', 'voltage')}>PNG</button>
-          <button onClick={() => exportSVG('voltage-chart', 'voltage')}>SVG</button>
+          <button onClick={() => exportPNG('gcd-chart', 'gcd')}>PNG</button>
+          <button onClick={() => exportSVG('gcd-chart', 'gcd')}>SVG</button>
         </div>
       </div>
 
@@ -82,7 +82,7 @@ export default function VoltageCapacityChart({ data = [] }) {
           <Line
             type="monotone"
             dataKey="voltage"
-            stroke="#2ca02c"
+            stroke="#1f77b4"
             strokeWidth={2}
             dot={false}
             name="电压"

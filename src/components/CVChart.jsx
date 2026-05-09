@@ -6,19 +6,19 @@ import {
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
 
-export default function VoltageCapacityChart({ data = [] }) {
+export default function CVChart({ data = [] }) {
   const validData = Array.isArray(data)
-    ? data.filter(d => d.capacity != null && d.voltage != null)
+    ? data.filter(d => d.voltage != null && d.current != null)
     : []
 
-  if (validData.length === 0) return <p>无有效数据用于绘制电压-容量曲线</p>
+  if (validData.length === 0) return <p>无有效数据用于绘制 CV 循环伏安曲线</p>
 
   const axisLine = { stroke: '#000', strokeWidth: 1.2 }
   const tickStyle = { fontSize: 12, fill: '#000' }
 
   return (
     <div
-      id="voltage-chart"
+      id="cv-chart"
       style={{
         marginTop: 30,
         background: '#fff',
@@ -45,10 +45,10 @@ export default function VoltageCapacityChart({ data = [] }) {
       </svg>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-        <h2 style={{ margin: 0 }}>电压 - 容量曲线</h2>
+        <h2 style={{ margin: 0 }}>CV 循环伏安曲线</h2>
         <div>
-          <button onClick={() => exportPNG('voltage-chart', 'voltage')}>PNG</button>
-          <button onClick={() => exportSVG('voltage-chart', 'voltage')}>SVG</button>
+          <button onClick={() => exportPNG('cv-chart', 'cv')}>PNG</button>
+          <button onClick={() => exportSVG('cv-chart', 'cv')}>SVG</button>
         </div>
       </div>
 
@@ -60,12 +60,12 @@ export default function VoltageCapacityChart({ data = [] }) {
           <CartesianGrid stroke="#e0e0e0" strokeDasharray="2 2" vertical={false} />
 
           <XAxis
-            dataKey="capacity"
+            dataKey="voltage"
             type="number"
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '容量 (mAh/g)', position: 'insideBottomRight', offset: -5, style: { fontSize: 13 } }}
+            label={{ value: '电压 (V)', position: 'insideBottomRight', offset: -5, style: { fontSize: 13 } }}
           />
 
           <YAxis
@@ -73,7 +73,7 @@ export default function VoltageCapacityChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '电压 (V)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 13 } }}
+            label={{ value: '电流 (mA)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 13 } }}
           />
 
           <Tooltip />
@@ -81,11 +81,11 @@ export default function VoltageCapacityChart({ data = [] }) {
 
           <Line
             type="monotone"
-            dataKey="voltage"
+            dataKey="current"
             stroke="#2ca02c"
             strokeWidth={2}
             dot={false}
-            name="电压"
+            name="电流"
           />
         </LineChart>
       </ResponsiveContainer>
