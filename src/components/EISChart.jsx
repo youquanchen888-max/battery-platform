@@ -58,7 +58,7 @@ export default function EISChart({ data = [] }) {
 
       <ResponsiveContainer width="100%" height={400}>
         <ScatterChart
-          margin={{ top: 20, right: 30, left: 30, bottom: 20 }}
+          margin={{ top: 20, right: 30, left: 30, bottom: 30 }}
         >
           <CartesianGrid stroke="#e0e0e0" strokeDasharray="2 2" />
 
@@ -70,7 +70,7 @@ export default function EISChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: "Z' (Ω)", position: 'insideBottomRight', offset: -5, style: { fontSize: 13 } }}
+            label={{ value: "Z' (Ω)", position: 'bottom', offset: 0, style: { fontSize: 14 } }}
           />
 
           <YAxis
@@ -81,12 +81,16 @@ export default function EISChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '-Z" (Ω)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 13 } }}
+            label={{ value: '-Z" (Ω)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 14 } }}
           />
 
           <ZAxis range={[60, 60]} />
           <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-          <Legend wrapperStyle={{ fontSize: 13 }} />
+          <Legend
+            align="right"
+            verticalAlign="top"
+            wrapperStyle={{ fontSize: 14 }}
+          />
 
           <Scatter name="样品" data={validData} fill="#8884d8" />
         </ScatterChart>

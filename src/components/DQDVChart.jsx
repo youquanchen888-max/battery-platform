@@ -53,7 +53,7 @@ export default function DQDVChart({ data = [] }) {
       <ResponsiveContainer width="100%" height={400}>
         <LineChart
           data={data}
-          margin={{ top: 20, right: 30, left: 30, bottom: 20 }}
+          margin={{ top: 20, right: 30, left: 30, bottom: 30 }}
         >
           <CartesianGrid stroke="#e0e0e0" strokeDasharray="2 2" vertical={false} />
 
@@ -63,7 +63,7 @@ export default function DQDVChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '电压 (V)', position: 'insideBottomRight', offset: -5, style: { fontSize: 13 } }}
+            label={{ value: '电压 (V)', position: 'bottom', offset: 0, style: { fontSize: 14 } }}
           />
 
           <YAxis
@@ -71,11 +71,15 @@ export default function DQDVChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: 'dQ/dV', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 13 } }}
+            label={{ value: 'dQ/dV', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 14 } }}
           />
 
           <Tooltip />
-          <Legend wrapperStyle={{ fontSize: 13 }} />
+          <Legend
+            align="right"
+            verticalAlign="top"
+            wrapperStyle={{ fontSize: 14 }}
+          />
 
           <Line
             type="monotone"

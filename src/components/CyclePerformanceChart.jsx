@@ -22,7 +22,6 @@ export default function CyclePerformanceChart({ data = [] }) {
   const axisLine = { stroke: '#000', strokeWidth: 1.2 }
   const tickStyle = { fontSize: 12, fill: '#000' }
 
-  // 计算整数刻度
   const minCycle = chartData[0]?.cycle ?? 1
   const maxCycle = chartData[chartData.length - 1]?.cycle ?? 1
 
@@ -65,7 +64,7 @@ export default function CyclePerformanceChart({ data = [] }) {
       <ResponsiveContainer width="100%" height={400}>
         <LineChart
           data={chartData}
-          margin={{ top: 20, right: 30, left: 30, bottom: 20 }}
+          margin={{ top: 20, right: 30, left: 30, bottom: 30 }}
         >
           <CartesianGrid stroke="#e0e0e0" strokeDasharray="2 2" vertical={false} yAxisId="left" />
 
@@ -73,11 +72,11 @@ export default function CyclePerformanceChart({ data = [] }) {
             dataKey="cycle"
             type="number"
             domain={[minCycle, maxCycle]}
-            ticks={Array.from({ length: maxCycle - minCycle + 1 }, (_, i) => minCycle + i)}  // 强制整数刻度
+            ticks={Array.from({ length: maxCycle - minCycle + 1 }, (_, i) => minCycle + i)}
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '循环圈数', position: 'insideBottomRight', offset: -5, style: { fontSize: 13 } }}
+            label={{ value: '循环次数', position: 'bottom', offset: 0, style: { fontSize: 14 } }}
           />
 
           <YAxis
@@ -86,7 +85,7 @@ export default function CyclePerformanceChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '比容量 (mAh/g)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 13 } }}
+            label={{ value: '比容量 (mAh/g)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 14 } }}
           />
 
           <YAxis
@@ -97,11 +96,15 @@ export default function CyclePerformanceChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '库伦效率 (%)', angle: -90, position: 'insideRight', offset: 10, style: { fontSize: 13 } }}
+            label={{ value: '库伦效率 (%)', angle: -90, position: 'insideRight', offset: 10, style: { fontSize: 14 } }}
           />
 
           <Tooltip />
-          <Legend wrapperStyle={{ fontSize: 13 }} />
+          <Legend
+            align="right"
+            verticalAlign="top"
+            wrapperStyle={{ fontSize: 14 }}
+          />
 
           <Line yAxisId="left" type="monotone" dataKey="capacity" stroke="#1f77b4" strokeWidth={2} dot={false} name="比容量" />
           <Line yAxisId="right" type="monotone" dataKey="efficiency" stroke="#d62728" strokeWidth={2} dot={false} name="库伦效率" />

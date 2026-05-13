@@ -55,7 +55,7 @@ export default function RateCapabilityChart({ data = [] }) {
       <ResponsiveContainer width="100%" height={400}>
         <BarChart
           data={validData}
-          margin={{ top: 20, right: 30, left: 30, bottom: 20 }}
+          margin={{ top: 20, right: 30, left: 30, bottom: 30 }}
         >
           <CartesianGrid stroke="#e0e0e0" strokeDasharray="2 2" vertical={false} />
 
@@ -64,7 +64,7 @@ export default function RateCapabilityChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '倍率 (C)', position: 'insideBottomRight', offset: -5, style: { fontSize: 13 } }}
+            label={{ value: '倍率 (C)', position: 'bottom', offset: 0, style: { fontSize: 14 } }}
           />
 
           <YAxis
@@ -72,11 +72,15 @@ export default function RateCapabilityChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '容量 (mAh/g)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 13 } }}
+            label={{ value: '容量 (mAh/g)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 14 } }}
           />
 
           <Tooltip />
-          <Legend wrapperStyle={{ fontSize: 13 }} />
+          <Legend
+            align="right"
+            verticalAlign="top"
+            wrapperStyle={{ fontSize: 14 }}
+          />
 
           <Bar dataKey="capacity" fill="#82ca9d" name="容量" />
         </BarChart>
