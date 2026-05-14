@@ -105,7 +105,9 @@ export function parseBatteryFile(binaryData, sheetName = null, manualMapping = {
 
   if (!data.length) {
     const hint = [detected.capacity, detected.dischargeCapacity, detected.chargeCapacity].filter(Boolean).join(' / ')
-    throw new Error(hint ? `没有有效的容量数据（已匹配列：${hint}）` : '没有有效的容量数据（未识别到容量列，请手动映射）')
+    const error = new Error(hint ? `没有有效的容量数据（已匹配列：${hint}）` : '没有有效的容量数据（未识别到容量列，请手动映射）')
+    error.details = { detected, sheetName: targetSheet, headerRow, columns: headers, fileType: detectFileType(fileName) }
+    throw error
   }
 
   return { data, detected, sheetName: targetSheet, headerRow, columns: headers, fileType: detectFileType(fileName) }

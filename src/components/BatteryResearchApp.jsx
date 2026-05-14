@@ -71,6 +71,11 @@ export default function BatteryResearchApp() {
         cyclePerformance: charts.cyclePerformance || false,
       })
     } catch (e) {
+      setRawData([])
+      setProcessedData([])
+      if (e?.details?.columns?.length) {
+        setMetadata(e.details)
+      }
       setError(e.message)
     }
   }, [workbook, manualMapping, currentFileName])
@@ -153,8 +158,8 @@ export default function BatteryResearchApp() {
 
       {metadata && (
         <>
-          <DetectionSummary metadata={metadata} charts={availableCharts} />
-          <ManualColumnMapper columns={metadata.columns} mapping={manualMapping} setMapping={setManualMapping} />
+          {rawData.length > 0 && <DetectionSummary metadata={metadata} charts={availableCharts} />}
+          <ManualColumnMapper columns={metadata.columns || []} mapping={manualMapping} setMapping={setManualMapping} />
         </>
       )}
 
