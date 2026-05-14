@@ -2,7 +2,28 @@ import { parseDelimitedTextToWorkbook } from './csvParser'
 import * as XLSX from 'xlsx'
 
 const ENCODINGS = ['utf-8', 'gb18030', 'utf-16le']
-const HEADER_HINTS = ['cycle', '循环', 'voltage', '电压', 'capacity', '容量']
+const HEADER_HINTS = ['cycle', '循环', 'voltage', '电压', 'capacity', '容量', 'current', '电流']
+
+function detectDelimiter(lines = []) {
+  const sample = lines.slice(0, 50).join('\n')
+  const tabCount = (sample.match(/\t/g) || []).length
+  const commaCount = (sample.match(/,/g) || []).length
+  const semiCount = (sample.match(/;/g) || []).length
+
+  if (tabCount >= commaCount && tabCount >= semiCount) return '\t'
+  if (commaCount >= semiCount) return ','
+  return ';'
+}
+
+function findRealHeader(lines = []) {
+  const maxScan = Math.min(lines.length, 100)
+  for (let i = 0; i < maxScan; i += 1) {
+    const lowerLine = String(lines[i] || '').toLowerCase()
+    const score = HEADER_HINTS.filter(hint => lowerLine.includes(hint.toLowerCase())).length
+    if (score >= 2) return i
+  }
+  return -1
+}
 
 function looksLikeText(text = '') {
   if (!text) return false
@@ -25,8 +46,11 @@ export function parseCexToWorkbook(arrayBuffer) {
       if (!looksLikeText(text)) continue
       const lines = text.split(/\r?\n/).filter(line => line.trim())
       if (!lines.length) continue
-      const headerIndex = lines.findIndex(line => HEADER_HINTS.some(hint => line.toLowerCase().includes(hint.toLowerCase())))
-      bestText = headerIndex >= 0 ? lines.slice(headerIndex).join('\n') : lines.join('\n')
+      const headerIndex = findRealHeader(lines)
+      const tableLines = headerIndex >= 0 ? lines.slice(headerIndex) : lines
+      const delimiter = detectDelimiter(tableLines)
+      const normalizedLines = tableLines.map(line => line.split(delimiter).map(cell => cell.trim()).join(delimiter))
+      bestText = normalizedLines.join('\n')
       break
     } catch (_) {}
   }
