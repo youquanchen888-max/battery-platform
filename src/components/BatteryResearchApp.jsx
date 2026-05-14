@@ -36,6 +36,7 @@ export default function BatteryResearchApp() {
   const [workbook, setWorkbook] = useState(null)
   const [uploadKey, setUploadKey] = useState(0)
   const [currentFileName, setCurrentFileName] = useState('')
+  const [encoding, setEncoding] = useState('auto')
 
   // 数据处理联动
   useEffect(() => {
@@ -107,7 +108,7 @@ export default function BatteryResearchApp() {
       try {
         const binaryData = evt.target.result
         setWorkbook(binaryData)
-        const wb = buildWorkbookFromArrayBuffer(binaryData, file.name)
+        const wb = buildWorkbookFromArrayBuffer(binaryData, file.name, { preferredEncoding: encoding })
         const names = wb.SheetNames
         setSheetNames(names)
         if (names.length > 0) {
@@ -136,6 +137,22 @@ export default function BatteryResearchApp() {
         onChange={handleUpload}
         style={{ marginBottom: 20 }}
       />
+
+      <div style={{ marginBottom: 20 }}>
+        <label htmlFor="encoding-select" style={{ marginRight: 8, fontWeight: 600 }}>编码选择：</label>
+        <select
+          id="encoding-select"
+          value={encoding}
+          onChange={(evt) => setEncoding(evt.target.value)}
+        >
+          <option value="auto">自动检测</option>
+          <option value="utf-8">UTF-8</option>
+          <option value="gbk">GBK</option>
+          <option value="gb18030">GB18030</option>
+          <option value="utf-16le">UTF-16LE</option>
+          <option value="utf-16be">UTF-16BE</option>
+        </select>
+      </div>
 
       {sheetNames.length > 1 && (
         <SheetSelector sheets={sheetNames} selectedSheet={currentSheet} setSelectedSheet={analyzeSheet} />
