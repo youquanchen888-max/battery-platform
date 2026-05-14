@@ -15,6 +15,7 @@ export default function DetectionSummary({ metadata, charts }) {
   return (
     <div style={{ marginTop: 20, padding: 15, border: '1px solid #ccc' }}>
       <h3>数据识别结果</h3>
+      <p>文件类型：{metadata.fileType || 'unknown'}</p>
       <p>Sheet：{metadata.sheetName}</p>
       <p>表头行：第 {metadata.headerRow + 1} 行</p>
 
