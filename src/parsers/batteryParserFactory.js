@@ -8,6 +8,7 @@ import { parseNdaToWorkbook } from './ndaParser'
 import { mapColumns } from './columnMapper'
 import { normalizeCurrent } from '../utils/normalizeUnits'
 import { cleanBatteryData } from '../utils/cleanData'
+import { detectHeaderRow } from '../utils/smartHeader'
 
 function avg(arr) {
   const valid = arr.filter(v => Number.isFinite(v))
@@ -58,11 +59,13 @@ export function parseBatteryFile(binaryData, sheetName = null, manualMapping = {
   const workbook = typeof binaryData === 'string' ? XLSX.read(binaryData, { type: 'binary' }) : buildWorkbookFromArrayBuffer(binaryData, fileName)
   const targetSheet = sheetName || detectBestSheet(workbook)
   const rowsAoa = XLSX.utils.sheet_to_json(workbook.Sheets[targetSheet], { header: 1 })
-  const headerRow = rowsAoa.findIndex(row => row?.some(cell => String(cell || '').trim()))
+  const firstNonEmptyRow = rowsAoa.findIndex(row => row?.some(cell => String(cell || '').trim()))
+  const guessedHeaderRow = detectHeaderRow(rowsAoa)
+  const headerRow = guessedHeaderRow >= 0 ? guessedHeaderRow : firstNonEmptyRow
   const rawRows = parseSheetToRows(workbook, targetSheet, headerRow > -1 ? headerRow : 0)
   if (!rawRows.length) throw new Error('未检测到有效数据')
 
-  const headers = Object.keys(rawRows[0])
+  const headers = Object.keys(rawRows[0]).filter(header => !/^empty_\d+$/i.test(String(header || '').trim()))
   const detected = mapColumns(headers, manualMapping)
 
   const normalized = rawRows.map((row, index) => {
