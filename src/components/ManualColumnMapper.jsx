@@ -17,7 +17,7 @@ export default function ManualColumnMapper({ columns, mapping, setMapping }) {
       <h3>手动列映射</h3>
       {fields.map(field => (
         <div key={field} style={{ marginBottom: 10 }}>
-          <label>{field}：</label>
+          <label>{ALIAS_MAP[field] || field}：</label>
           <select
             value={mapping[field] || ''}
             onChange={(e) =>
@@ -30,7 +30,7 @@ export default function ManualColumnMapper({ columns, mapping, setMapping }) {
             <option value="">未选择</option>
             {columns.map(col => (
               <option key={col} value={col}>
-                {col}{ALIAS_MAP[col] ? ` (${ALIAS_MAP[col]})` : ''}
+                {col}
               </option>
             ))}
           </select>
