@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
 import { getSmartAxisDomain, getSmartTickCount } from '../utils/chartTheme'
+import { formatToThreeSignificant } from '../utils/numberFormat'
 
 export default function EISChart({ data = [] }) {
   const validData = Array.isArray(data)
@@ -76,6 +77,7 @@ export default function EISChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+            tickFormatter={formatToThreeSignificant}
             label={{ value: "Z' (Ω)", position: 'bottom', offset: 0, style: { fontSize: 14 } }}
           />
 
@@ -89,6 +91,7 @@ export default function EISChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+            tickFormatter={formatToThreeSignificant}
             label={{ value: '-Z" (Ω)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 14 } }}
           />
 

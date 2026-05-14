@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
 import { getSmartAxisDomain, getSmartTickCount } from '../utils/chartTheme'
+import { formatToThreeSignificant } from '../utils/numberFormat'
 
 export default function GCDChart({ data = [] }) {
   const validData = Array.isArray(data)
@@ -71,6 +72,7 @@ export default function GCDChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+            tickFormatter={formatToThreeSignificant}
             label={{ value: '容量 (mAh/g)', position: 'bottom', offset: 0, style: { fontSize: 14 } }}
           />
 
@@ -81,6 +83,7 @@ export default function GCDChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+            tickFormatter={formatToThreeSignificant}
             label={{ value: '电压 (V)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 14 } }}
           />
 

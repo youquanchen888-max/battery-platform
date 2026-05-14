@@ -48,8 +48,43 @@ const pickCapacityColumn = (columns, manualCapacity = null) => {
   return findColumn(columns, COLUMN_ALIASES.capacity)
 }
 
+const parseDelimitedTextToWorkbook = (text) => {
+  const lines = text.split(/\r?\n/).filter(line => line.trim())
+  if (!lines.length) throw new Error('文本文件内容为空')
+  const sample = lines.slice(0, 30).join('\n')
+  const tabCount = (sample.match(/\t/g) || []).length
+  const commaCount = (sample.match(/,/g) || []).length
+  const semiCount = (sample.match(/;/g) || []).length
+  const delimiter = tabCount >= commaCount && tabCount >= semiCount ? '\t' : (commaCount >= semiCount ? ',' : ';')
+
+  const aoa = lines.map(line => line.split(delimiter).map(cell => cell.trim()))
+  const ws = XLSX.utils.aoa_to_sheet(aoa)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Data')
+  return wb
+}
+
+export const buildWorkbookFromArrayBuffer = (arrayBuffer) => {
+  try {
+    return XLSX.read(arrayBuffer, { type: 'array' })
+  } catch (_) {
+    const decoders = ['utf-8', 'gb18030']
+    for (const encoding of decoders) {
+      try {
+        const text = new TextDecoder(encoding).decode(arrayBuffer)
+        return parseDelimitedTextToWorkbook(text)
+      } catch (err) {
+        continue
+      }
+    }
+    throw new Error('无法解析该文件，请先在蓝电/新威软件中导出为 CSV 或 Excel')
+  }
+}
+
 export const parseBatteryFile = (binaryData, sheetName = null, manualMapping = {}) => {
-  const workbook = XLSX.read(binaryData, { type: 'binary' })
+  const workbook = typeof binaryData === 'string'
+    ? XLSX.read(binaryData, { type: 'binary' })
+    : buildWorkbookFromArrayBuffer(binaryData)
   const targetSheet = sheetName || detectBestSheet(workbook)
   const sheet = workbook.Sheets[targetSheet]
 
@@ -81,7 +116,7 @@ export const parseBatteryFile = (binaryData, sheetName = null, manualMapping = {
     const rawEff = detected.efficiency ? Number(row[detected.efficiency]) : null
 
     const cycle = (rawCycle != null && !isNaN(rawCycle)) ? rawCycle : index + 1
-    let capacity = (!isNaN(rawCap) ? rawCap : null)
+    const capacity = (!isNaN(rawCap) ? rawCap : null)
     let efficiency = null
     if (rawEff != null && !isNaN(rawEff)) {
       efficiency = rawEff > 2 ? rawEff : rawEff * 100
