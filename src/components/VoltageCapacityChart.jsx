@@ -5,6 +5,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
+import { getSmartAxisDomain, getSmartTickCount } from '../utils/chartTheme'
 
 export default function VoltageCapacityChart({ data = [] }) {
   const validData = Array.isArray(data)
@@ -15,6 +16,9 @@ export default function VoltageCapacityChart({ data = [] }) {
 
   const axisLine = { stroke: '#000', strokeWidth: 1.2 }
   const tickStyle = { fontSize: 12, fill: '#000' }
+
+  const xValues = validData.map(d => d.capacity)
+  const yValues = validData.map(d => d.voltage)
 
   return (
     <div
@@ -62,6 +66,8 @@ export default function VoltageCapacityChart({ data = [] }) {
           <XAxis
             dataKey="capacity"
             type="number"
+            domain={getSmartAxisDomain(xValues, [0, 1])}
+            tickCount={getSmartTickCount(xValues)}
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
@@ -70,6 +76,8 @@ export default function VoltageCapacityChart({ data = [] }) {
 
           <YAxis
             type="number"
+            domain={getSmartAxisDomain(yValues, [0, 1])}
+            tickCount={getSmartTickCount(yValues)}
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}

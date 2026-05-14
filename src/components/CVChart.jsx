@@ -5,6 +5,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
+import { getSmartAxisDomain, getSmartTickCount } from '../utils/chartTheme'
 
 export default function CVChart({ data = [] }) {
   const validData = Array.isArray(data)
@@ -15,6 +16,9 @@ export default function CVChart({ data = [] }) {
 
   const axisLine = { stroke: '#000', strokeWidth: 1.2 }
   const tickStyle = { fontSize: 12, fill: '#000' }
+
+  const xValues = validData.map(d => d.voltage)
+  const yValues = validData.map(d => d.current)
 
   return (
     <div
@@ -62,6 +66,8 @@ export default function CVChart({ data = [] }) {
           <XAxis
             dataKey="voltage"
             type="number"
+            domain={getSmartAxisDomain(xValues, [0, 1])}
+            tickCount={getSmartTickCount(xValues)}
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
@@ -70,6 +76,8 @@ export default function CVChart({ data = [] }) {
 
           <YAxis
             type="number"
+            domain={getSmartAxisDomain(yValues, [-1, 1])}
+            tickCount={getSmartTickCount(yValues)}
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
