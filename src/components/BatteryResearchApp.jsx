@@ -127,7 +127,7 @@ export default function BatteryResearchApp() {
       <input
         key={uploadKey}
         type="file"
-        accept=".xlsx,.xls,.csv,.txt,.nda,.cex"
+        accept=".xlsx,.xls,.csv,.txt,.nda,.ndax,.cex"
         onChange={handleUpload}
         style={{ marginBottom: 20 }}
       />
