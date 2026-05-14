@@ -5,6 +5,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
+import { getSmartAxisDomain, getSmartTickCount } from '../utils/chartTheme'
 
 export default function CyclePerformanceChart({ data = [] }) {
   const chartData = Array.isArray(data)
@@ -22,9 +23,10 @@ export default function CyclePerformanceChart({ data = [] }) {
   const axisLine = { stroke: '#000', strokeWidth: 1.2 }
   const tickStyle = { fontSize: 12, fill: '#000' }
 
-  const minCycle = Math.min(...chartData.map(d => d.cycle).filter(v => Number.isFinite(v)))
-  const maxCycle = Math.max(...chartData.map(d => d.cycle).filter(v => Number.isFinite(v)))
-  const cyclePadding = Math.max(1, Math.round((maxCycle - minCycle) * 0.03))
+  const xValues = chartData.map(d => d.cycle)
+  const capacityValues = chartData.map(d => d.capacity)
+  const efficiencyValues = chartData.map(d => d.efficiency)
+  const hasEfficiency = efficiencyValues.some(v => Number.isFinite(v))
 
   return (
     <div
@@ -72,8 +74,8 @@ export default function CyclePerformanceChart({ data = [] }) {
           <XAxis
             dataKey="cycle"
             type="number"
-            domain={[minCycle - cyclePadding, maxCycle + cyclePadding]}
-            tickCount={Math.min(10, Math.max(4, Math.ceil((maxCycle - minCycle + 1) / 20)))}
+            domain={getSmartAxisDomain(xValues, [0, 1])}
+            tickCount={getSmartTickCount(xValues)}
             allowDataOverflow={false}
             axisLine={axisLine}
             tick={tickStyle}
@@ -84,22 +86,27 @@ export default function CyclePerformanceChart({ data = [] }) {
           <YAxis
             yAxisId="left"
             type="number"
+            domain={getSmartAxisDomain(capacityValues, [0, 1])}
+            tickCount={getSmartTickCount(capacityValues)}
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
             label={{ value: '比容量 (mAh/g)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 14 } }}
           />
 
-          <YAxis
-            yAxisId="right"
-            orientation="right"
-            type="number"
-            domain={[80, 120]}
-            axisLine={axisLine}
-            tick={tickStyle}
-            tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
-            label={{ value: '库伦效率 (%)', angle: -90, position: 'insideRight', offset: 10, style: { fontSize: 14 } }}
-          />
+          {hasEfficiency && (
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              type="number"
+              domain={getSmartAxisDomain(efficiencyValues, [80, 120])}
+              tickCount={getSmartTickCount(efficiencyValues)}
+              axisLine={axisLine}
+              tick={tickStyle}
+              tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+              label={{ value: '库伦效率 (%)', angle: -90, position: 'insideRight', offset: 10, style: { fontSize: 14 } }}
+            />
+          )}
 
           <Tooltip />
           <Legend
@@ -109,7 +116,9 @@ export default function CyclePerformanceChart({ data = [] }) {
           />
 
           <Line yAxisId="left" type="monotone" dataKey="capacity" stroke="#1f77b4" strokeWidth={2} dot={false} name="比容量" />
-          <Line yAxisId="right" type="monotone" dataKey="efficiency" stroke="#d62728" strokeWidth={2} dot={false} name="库伦效率" />
+          {hasEfficiency && (
+            <Line yAxisId="right" type="monotone" dataKey="efficiency" stroke="#d62728" strokeWidth={2} dot={false} name="库伦效率" />
+          )}
         </LineChart>
       </ResponsiveContainer>
     </div>

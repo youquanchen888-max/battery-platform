@@ -5,6 +5,7 @@ import {
   ResponsiveContainer, ZAxis
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
+import { getSmartAxisDomain, getSmartTickCount } from '../utils/chartTheme'
 
 export default function EISChart({ data = [] }) {
   const validData = Array.isArray(data)
@@ -19,6 +20,9 @@ export default function EISChart({ data = [] }) {
 
   const axisLine = { stroke: '#000', strokeWidth: 1.2 }
   const tickStyle = { fontSize: 12, fill: '#000' }
+
+  const xValues = validData.map(d => d.zReal)
+  const yValues = validData.map(d => d.zImag)
 
   return (
     <div
@@ -65,6 +69,8 @@ export default function EISChart({ data = [] }) {
           <XAxis
             dataKey="zReal"
             type="number"
+            domain={getSmartAxisDomain(xValues, [0, 1])}
+            tickCount={getSmartTickCount(xValues)}
             name="Z'"
             unit="Ω"
             axisLine={axisLine}
@@ -76,6 +82,8 @@ export default function EISChart({ data = [] }) {
           <YAxis
             dataKey="zImag"
             type="number"
+            domain={getSmartAxisDomain(yValues, [-1, 1])}
+            tickCount={getSmartTickCount(yValues)}
             name='-Z"'
             unit="Ω"
             axisLine={axisLine}

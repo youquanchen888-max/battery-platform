@@ -37,3 +37,27 @@ export const colors = {
   dqdv: '#9467bd',
   current: '#2ca02c',
 }
+
+// 智能数值轴范围：自动留白，避免数据挤在一起
+export const getSmartAxisDomain = (values = [], fallback = [0, 1]) => {
+  const nums = values.filter(v => Number.isFinite(v))
+  if (nums.length === 0) return fallback
+
+  const min = Math.min(...nums)
+  const max = Math.max(...nums)
+
+  if (min === max) {
+    const basePad = Math.abs(min) > 0 ? Math.abs(min) * 0.1 : 1
+    return [min - basePad, max + basePad]
+  }
+
+  const span = max - min
+  const pad = Math.max(span * 0.06, Math.abs(max) * 0.01, 1e-6)
+  return [min - pad, max + pad]
+}
+
+export const getSmartTickCount = (values = [], preferredMax = 10) => {
+  const nums = values.filter(v => Number.isFinite(v))
+  if (nums.length <= 2) return 4
+  return Math.min(preferredMax, Math.max(4, Math.ceil(Math.sqrt(nums.length))))
+}

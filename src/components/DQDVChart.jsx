@@ -5,6 +5,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
+import { getSmartAxisDomain, getSmartTickCount } from '../utils/chartTheme'
 
 export default function DQDVChart({ data = [] }) {
   if (!Array.isArray(data) || data.length === 0) {
@@ -13,6 +14,9 @@ export default function DQDVChart({ data = [] }) {
 
   const axisLine = { stroke: '#000', strokeWidth: 1.2 }
   const tickStyle = { fontSize: 12, fill: '#000' }
+
+  const xValues = data.map(d => d.voltage)
+  const yValues = data.map(d => d.dqdv)
 
   return (
     <div
@@ -60,6 +64,8 @@ export default function DQDVChart({ data = [] }) {
           <XAxis
             dataKey="voltage"
             type="number"
+            domain={getSmartAxisDomain(xValues, [0, 1])}
+            tickCount={getSmartTickCount(xValues)}
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
@@ -68,6 +74,8 @@ export default function DQDVChart({ data = [] }) {
 
           <YAxis
             type="number"
+            domain={getSmartAxisDomain(yValues, [-1, 1])}
+            tickCount={getSmartTickCount(yValues)}
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
