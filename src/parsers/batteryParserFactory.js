@@ -14,6 +14,23 @@ function avg(arr) {
   return valid.length ? valid.reduce((a, b) => a + b, 0) / valid.length : null
 }
 
+function parseNumericValue(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : NaN
+  if (typeof value === 'boolean' || value == null) return NaN
+  const text = String(value).trim()
+  if (!text) return NaN
+
+  const normalized = text
+    .replace(/,/g, '')
+    .replace(/μ/g, 'u')
+    .replace(/[^\d.eE+-]/g, ' ')
+    .trim()
+
+  if (!normalized) return NaN
+  const match = normalized.match(/[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/)
+  return match ? Number(match[0]) : NaN
+}
+
 export function buildWorkbookFromArrayBuffer(arrayBuffer, fileName = '') {
   const type = detectFileType(fileName)
 
@@ -49,12 +66,12 @@ export function parseBatteryFile(binaryData, sheetName = null, manualMapping = {
   const detected = mapColumns(headers, manualMapping)
 
   const normalized = rawRows.map((row, index) => {
-    const cycle = Number(row[detected.cycle]) || index + 1
-    const dischargeCapacity = Number(row[detected.dischargeCapacity])
-    const chargeCapacity = Number(row[detected.chargeCapacity])
-    const baseCapacity = Number(row[detected.capacity])
+    const cycle = parseNumericValue(row[detected.cycle]) || index + 1
+    const dischargeCapacity = parseNumericValue(row[detected.dischargeCapacity])
+    const chargeCapacity = parseNumericValue(row[detected.chargeCapacity])
+    const baseCapacity = parseNumericValue(row[detected.capacity])
     const capacity = Number.isFinite(baseCapacity) ? baseCapacity : (Number.isFinite(dischargeCapacity) ? dischargeCapacity : chargeCapacity)
-    const rawEff = Number(row[detected.efficiency])
+    const rawEff = parseNumericValue(row[detected.efficiency])
     const efficiency = Number.isFinite(rawEff)
       ? (rawEff > 2 ? rawEff : rawEff * 100)
       : (Number.isFinite(dischargeCapacity) && Number.isFinite(chargeCapacity) && chargeCapacity !== 0 ? dischargeCapacity / chargeCapacity * 100 : null)
@@ -63,10 +80,10 @@ export function parseBatteryFile(binaryData, sheetName = null, manualMapping = {
       cycle,
       capacity,
       efficiency,
-      voltage: Number(row[detected.voltage]),
+      voltage: parseNumericValue(row[detected.voltage]),
       current: normalizeCurrent(row[detected.current], detected.current),
-      zReal: Number(row[detected.zReal]),
-      zImag: Number(row[detected.zImag]),
+      zReal: parseNumericValue(row[detected.zReal]),
+      zImag: parseNumericValue(row[detected.zImag]),
     }
   })
 
@@ -86,7 +103,10 @@ export function parseBatteryFile(binaryData, sheetName = null, manualMapping = {
     zImag: avg(items.map(i => i.zImag)),
   })).sort((a, b) => a.cycle - b.cycle)
 
-  if (!data.length) throw new Error('没有有效的容量数据')
+  if (!data.length) {
+    const hint = [detected.capacity, detected.dischargeCapacity, detected.chargeCapacity].filter(Boolean).join(' / ')
+    throw new Error(hint ? `没有有效的容量数据（已匹配列：${hint}）` : '没有有效的容量数据（未识别到容量列，请手动映射）')
+  }
 
   return { data, detected, sheetName: targetSheet, headerRow, columns: headers, fileType: detectFileType(fileName) }
 }
