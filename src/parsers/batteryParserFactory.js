@@ -32,10 +32,10 @@ function parseNumericValue(value) {
   return match ? Number(match[0]) : NaN
 }
 
-export function buildWorkbookFromArrayBuffer(arrayBuffer, fileName = '') {
+export function buildWorkbookFromArrayBuffer(arrayBuffer, fileName = '', options = {}) {
   const type = detectFileType(fileName)
 
-  if (type === 'cex') return parseCexToWorkbook(arrayBuffer)
+  if (type === 'cex') return parseCexToWorkbook(arrayBuffer, options)
   if (type === 'nda') return parseNdaToWorkbook(arrayBuffer)
 
   if (type === 'csv') {
