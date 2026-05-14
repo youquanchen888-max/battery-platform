@@ -1,11 +1,10 @@
 import * as XLSX from 'xlsx'
 import { detectBestSheet } from '../utils/sheetDetector'
-import { detectHeaderRow } from '../utils/smartHeader'
 import { detectFileType } from '../utils/detectFileType'
 import { parseExcelWorkbook, parseSheetToRows } from './excelParser'
 import { parseDelimitedTextToWorkbook } from './csvParser'
-import { parseLandProprietary } from './landParser'
-import { parseNewareProprietary } from './newareParser'
+import { parseCexToWorkbook } from './cexParser'
+import { parseNdaToWorkbook } from './ndaParser'
 import { mapColumns } from './columnMapper'
 import { normalizeCurrent } from '../utils/normalizeUnits'
 import { cleanBatteryData } from '../utils/cleanData'
@@ -17,8 +16,9 @@ function avg(arr) {
 
 export function buildWorkbookFromArrayBuffer(arrayBuffer, fileName = '') {
   const type = detectFileType(fileName)
-  if (type === 'land') parseLandProprietary()
-  if (type === 'neware') parseNewareProprietary()
+
+  if (type === 'cex') return parseCexToWorkbook(arrayBuffer)
+  if (type === 'nda') return parseNdaToWorkbook(arrayBuffer)
 
   if (type === 'csv') {
     for (const encoding of ['utf-8', 'gb18030']) {
@@ -41,8 +41,8 @@ export function parseBatteryFile(binaryData, sheetName = null, manualMapping = {
   const workbook = typeof binaryData === 'string' ? XLSX.read(binaryData, { type: 'binary' }) : buildWorkbookFromArrayBuffer(binaryData, fileName)
   const targetSheet = sheetName || detectBestSheet(workbook)
   const rowsAoa = XLSX.utils.sheet_to_json(workbook.Sheets[targetSheet], { header: 1 })
-  const headerRow = detectHeaderRow(rowsAoa)
-  const rawRows = parseSheetToRows(workbook, targetSheet, headerRow)
+  const headerRow = rowsAoa.findIndex(row => row?.some(cell => String(cell || '').trim()))
+  const rawRows = parseSheetToRows(workbook, targetSheet, headerRow > -1 ? headerRow : 0)
   if (!rawRows.length) throw new Error('未检测到有效数据')
 
   const headers = Object.keys(rawRows[0])
