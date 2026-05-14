@@ -3,8 +3,10 @@ import { detectBestSheet } from './sheetDetector'
 import { detectHeaderRow } from './smartHeader'
 
 const COLUMN_ALIASES = {
-  cycle: ['cycle', '循环', '循环次数', '循环序号', '圈数'],
+  cycle: ['cycle', '循环', '循环次数', '循环序号', '圈数', 'cyc', '循环号'],
   capacity: ['capacity', '比容量', '放电比容量', '容量', 'mah/g', 'mahg'],
+  dischargeCapacity: ['放电容量', '放电比容量', 'discharge capacity', 'discharge specific capacity', 'dchg capacity', 'q discharge', 'qdischarge', 'dcapacity'],
+  chargeCapacity: ['充电容量', '充电比容量', 'charge capacity', 'charge specific capacity', 'chg capacity', 'q charge', 'qcharge', 'ccapacity'],
   efficiency: ['efficiency', 'ce', '库伦效率', '效率'],
   voltage: ['voltage', '电压'],
   current: ['current', '电流'],
@@ -51,7 +53,7 @@ const pickCapacityColumn = (columns, manualCapacity = null) => {
 const parseDelimitedTextToWorkbook = (text) => {
   const lines = text.split(/\r?\n/).filter(line => line.trim())
   if (!lines.length) throw new Error('文本文件内容为空')
-  const sample = lines.slice(0, 30).join('\n')
+  const sample = lines.slice(0, 50).join('\n')
   const tabCount = (sample.match(/\t/g) || []).length
   const commaCount = (sample.match(/,/g) || []).length
   const semiCount = (sample.match(/;/g) || []).length
@@ -64,7 +66,19 @@ const parseDelimitedTextToWorkbook = (text) => {
   return wb
 }
 
-export const buildWorkbookFromArrayBuffer = (arrayBuffer) => {
+const shouldTryTextFirst = (fileName = '') => /\.(cex|nda|csv|txt)$/i.test(fileName)
+
+export const buildWorkbookFromArrayBuffer = (arrayBuffer, fileName = '') => {
+  if (shouldTryTextFirst(fileName)) {
+    const decoders = ['utf-8', 'gb18030']
+    for (const encoding of decoders) {
+      try {
+        const text = new TextDecoder(encoding).decode(arrayBuffer)
+        if ((text.match(/\n/g) || []).length > 3 && /[,;\t]/.test(text)) return parseDelimitedTextToWorkbook(text)
+      } catch (_) {}
+    }
+  }
+
   try {
     return XLSX.read(arrayBuffer, { type: 'array' })
   } catch (_) {
@@ -81,10 +95,10 @@ export const buildWorkbookFromArrayBuffer = (arrayBuffer) => {
   }
 }
 
-export const parseBatteryFile = (binaryData, sheetName = null, manualMapping = {}) => {
+export const parseBatteryFile = (binaryData, sheetName = null, manualMapping = {}, fileName = '') => {
   const workbook = typeof binaryData === 'string'
     ? XLSX.read(binaryData, { type: 'binary' })
-    : buildWorkbookFromArrayBuffer(binaryData)
+    : buildWorkbookFromArrayBuffer(binaryData, fileName)
   const targetSheet = sheetName || detectBestSheet(workbook)
   const sheet = workbook.Sheets[targetSheet]
 
@@ -103,6 +117,8 @@ export const parseBatteryFile = (binaryData, sheetName = null, manualMapping = {
   const detected = {
     cycle: pickMappedColumn(columns, manualMapping.cycle) || findColumn(columns, COLUMN_ALIASES.cycle),
     capacity: pickCapacityColumn(columns, manualMapping.capacity),
+    dischargeCapacity: findColumn(columns, COLUMN_ALIASES.dischargeCapacity),
+    chargeCapacity: findColumn(columns, COLUMN_ALIASES.chargeCapacity),
     efficiency: pickMappedColumn(columns, manualMapping.efficiency) || findColumn(columns, COLUMN_ALIASES.efficiency),
     voltage: pickMappedColumn(columns, manualMapping.voltage) || findColumn(columns, COLUMN_ALIASES.voltage),
     current: pickMappedColumn(columns, manualMapping.current) || findColumn(columns, COLUMN_ALIASES.current),
@@ -113,10 +129,17 @@ export const parseBatteryFile = (binaryData, sheetName = null, manualMapping = {
   let parsedData = jsonData.map((row, index) => {
     const rawCycle = detected.cycle ? Number(row[detected.cycle]) : null
     const rawCap = detected.capacity ? Number(row[detected.capacity]) : null
+    const dischargeCap = detected.dischargeCapacity ? Number(row[detected.dischargeCapacity]) : null
+    const chargeCap = detected.chargeCapacity ? Number(row[detected.chargeCapacity]) : null
     const rawEff = detected.efficiency ? Number(row[detected.efficiency]) : null
 
-    const cycle = (rawCycle != null && !isNaN(rawCycle)) ? rawCycle : index + 1
-    const capacity = (!isNaN(rawCap) ? rawCap : null)
+    let cycle = (rawCycle != null && !isNaN(rawCycle)) ? rawCycle : index + 1
+    if (!Number.isFinite(cycle) || cycle <= 0) cycle = index + 1
+
+    let capacity = !isNaN(rawCap) ? rawCap : null
+    if (capacity == null && !isNaN(dischargeCap)) capacity = dischargeCap
+    if (capacity == null && !isNaN(chargeCap)) capacity = chargeCap
+
     let efficiency = null
     if (rawEff != null && !isNaN(rawEff)) {
       efficiency = rawEff > 2 ? rawEff : rawEff * 100
