@@ -1,4 +1,5 @@
 import { parseDelimitedTextToWorkbook } from './csvParser'
+import * as XLSX from 'xlsx'
 
 const ENCODINGS = ['utf-8', 'gb18030', 'utf-16le']
 const HEADER_HINTS = ['cycle', '循环', 'voltage', '电压', 'capacity', '容量']
@@ -11,6 +12,11 @@ function looksLikeText(text = '') {
 }
 
 export function parseCexToWorkbook(arrayBuffer) {
+  try {
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+    if (workbook?.SheetNames?.length) return workbook
+  } catch (_) {}
+
   let bestText = ''
 
   for (const encoding of ENCODINGS) {
