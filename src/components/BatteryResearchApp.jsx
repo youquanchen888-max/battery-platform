@@ -56,11 +56,11 @@ export default function BatteryResearchApp() {
     }
   }, [processedData, availableCharts.dqdv])
 
-  const analyzeSheet = useCallback((sheetName) => {
-    if (!workbook) return
+  const analyzeSheet = useCallback((sheetName, workbookData = workbook) => {
+    if (!workbookData) return
     setError('')
     try {
-      const result = parseBatteryFile(workbook, sheetName)
+      const result = parseBatteryFile(workbookData, sheetName)
       setRawData(result.data)
       setMetadata(result)
       setCurrentSheet(sheetName)
@@ -98,7 +98,7 @@ export default function BatteryResearchApp() {
         const names = wb.SheetNames
         setSheetNames(names)
         if (names.length > 0) {
-          analyzeSheet(names[0])
+          analyzeSheet(names[0], binaryData)
         } else {
           setError('文件中未找到工作表')
         }
