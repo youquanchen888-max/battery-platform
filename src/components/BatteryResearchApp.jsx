@@ -35,6 +35,7 @@ export default function BatteryResearchApp() {
   const [currentSheet, setCurrentSheet] = useState('')
   const [workbook, setWorkbook] = useState(null)
   const [uploadKey, setUploadKey] = useState(0)
+  const [currentFileName, setCurrentFileName] = useState('')
 
   // 数据处理联动
   useEffect(() => {
@@ -55,11 +56,11 @@ export default function BatteryResearchApp() {
     }
   }, [processedData, availableCharts.dqdv])
 
-  const analyzeSheet = useCallback((sheetName, workbookData = workbook) => {
+  const analyzeSheet = useCallback((sheetName, workbookData = workbook, fileNameOverride = currentFileName) => {
     if (!workbookData) return
     setError('')
     try {
-      const result = parseBatteryFile(workbookData, sheetName, manualMapping)
+      const result = parseBatteryFile(workbookData, sheetName, manualMapping, fileNameOverride)
       setRawData(result.data)
       setMetadata(result)
       setCurrentSheet(sheetName)
@@ -72,7 +73,7 @@ export default function BatteryResearchApp() {
     } catch (e) {
       setError(e.message)
     }
-  }, [workbook, manualMapping])
+  }, [workbook, manualMapping, currentFileName])
 
   useEffect(() => {
     if (!workbook || !currentSheet) return
@@ -92,17 +93,20 @@ export default function BatteryResearchApp() {
     setSheetNames([])
     setCurrentSheet('')
     setWorkbook(null)
+    setCurrentFileName('')
+
+    setCurrentFileName(file.name || '')
 
     const reader = new FileReader()
     reader.onload = (evt) => {
       try {
         const binaryData = evt.target.result
         setWorkbook(binaryData)
-        const wb = buildWorkbookFromArrayBuffer(binaryData)
+        const wb = buildWorkbookFromArrayBuffer(binaryData, file.name)
         const names = wb.SheetNames
         setSheetNames(names)
         if (names.length > 0) {
-          analyzeSheet(names[0], binaryData)
+          analyzeSheet(names[0], binaryData, file.name || "")
         } else {
           setError('文件中未找到工作表')
         }
