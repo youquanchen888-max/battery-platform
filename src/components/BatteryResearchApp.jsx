@@ -60,7 +60,7 @@ export default function BatteryResearchApp() {
     if (!workbookData) return
     setError('')
     try {
-      const result = parseBatteryFile(workbookData, sheetName)
+      const result = parseBatteryFile(workbookData, sheetName, manualMapping)
       setRawData(result.data)
       setMetadata(result)
       setCurrentSheet(sheetName)
@@ -73,7 +73,12 @@ export default function BatteryResearchApp() {
     } catch (e) {
       setError(e.message)
     }
-  }, [workbook])
+  }, [workbook, manualMapping])
+
+  useEffect(() => {
+    if (!workbook || !currentSheet) return
+    analyzeSheet(currentSheet, workbook)
+  }, [manualMapping, workbook, currentSheet, analyzeSheet])
 
   const handleUpload = (e) => {
     const file = e.target.files[0]

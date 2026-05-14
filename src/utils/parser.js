@@ -29,7 +29,26 @@ const avg = (arr) => {
   return valid.reduce((a, b) => a + b, 0) / valid.length
 }
 
-export const parseBatteryFile = (binaryData, sheetName = null) => {
+const pickMappedColumn = (columns, mappedColumn) => {
+  if (!mappedColumn) return null
+  return columns.find(col => col === mappedColumn) || null
+}
+
+const pickCapacityColumn = (columns, manualCapacity = null) => {
+  const mapped = pickMappedColumn(columns, manualCapacity)
+  if (mapped) return mapped
+
+  const preferred = [
+    '放电比容量', '放电容量', 'discharge specific capacity', 'discharge capacity',
+    'dcapacity', 'q discharge', 'qdischarge', 'dchg capacity'
+  ]
+  const byPreferred = findColumn(columns, preferred)
+  if (byPreferred) return byPreferred
+
+  return findColumn(columns, COLUMN_ALIASES.capacity)
+}
+
+export const parseBatteryFile = (binaryData, sheetName = null, manualMapping = {}) => {
   const workbook = XLSX.read(binaryData, { type: 'binary' })
   const targetSheet = sheetName || detectBestSheet(workbook)
   const sheet = workbook.Sheets[targetSheet]
@@ -47,11 +66,11 @@ export const parseBatteryFile = (binaryData, sheetName = null) => {
   const columns = Object.keys(jsonData[0])
 
   const detected = {
-    cycle: findColumn(columns, COLUMN_ALIASES.cycle),
-    capacity: findColumn(columns, COLUMN_ALIASES.capacity),
-    efficiency: findColumn(columns, COLUMN_ALIASES.efficiency),
-    voltage: findColumn(columns, COLUMN_ALIASES.voltage),
-    current: findColumn(columns, COLUMN_ALIASES.current),
+    cycle: pickMappedColumn(columns, manualMapping.cycle) || findColumn(columns, COLUMN_ALIASES.cycle),
+    capacity: pickCapacityColumn(columns, manualMapping.capacity),
+    efficiency: pickMappedColumn(columns, manualMapping.efficiency) || findColumn(columns, COLUMN_ALIASES.efficiency),
+    voltage: pickMappedColumn(columns, manualMapping.voltage) || findColumn(columns, COLUMN_ALIASES.voltage),
+    current: pickMappedColumn(columns, manualMapping.current) || findColumn(columns, COLUMN_ALIASES.current),
     zReal: findColumn(columns, COLUMN_ALIASES.zReal),
     zImag: findColumn(columns, COLUMN_ALIASES.zImag),
   }

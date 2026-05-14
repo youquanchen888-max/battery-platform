@@ -22,8 +22,9 @@ export default function CyclePerformanceChart({ data = [] }) {
   const axisLine = { stroke: '#000', strokeWidth: 1.2 }
   const tickStyle = { fontSize: 12, fill: '#000' }
 
-  const minCycle = chartData[0]?.cycle ?? 1
-  const maxCycle = chartData[chartData.length - 1]?.cycle ?? 1
+  const minCycle = Math.min(...chartData.map(d => d.cycle).filter(v => Number.isFinite(v)))
+  const maxCycle = Math.max(...chartData.map(d => d.cycle).filter(v => Number.isFinite(v)))
+  const cyclePadding = Math.max(1, Math.round((maxCycle - minCycle) * 0.03))
 
   return (
     <div
@@ -71,8 +72,9 @@ export default function CyclePerformanceChart({ data = [] }) {
           <XAxis
             dataKey="cycle"
             type="number"
-            domain={[minCycle, maxCycle]}
-            ticks={Array.from({ length: maxCycle - minCycle + 1 }, (_, i) => minCycle + i)}
+            domain={[minCycle - cyclePadding, maxCycle + cyclePadding]}
+            tickCount={Math.min(10, Math.max(4, Math.ceil((maxCycle - minCycle + 1) / 20)))}
+            allowDataOverflow={false}
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
