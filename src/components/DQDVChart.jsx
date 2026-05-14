@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
 import { getSmartAxisDomain, getSmartTickCount } from '../utils/chartTheme'
+import { formatToThreeSignificant } from '../utils/numberFormat'
 
 export default function DQDVChart({ data = [] }) {
   if (!Array.isArray(data) || data.length === 0) {
@@ -69,6 +70,7 @@ export default function DQDVChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+            tickFormatter={formatToThreeSignificant}
             label={{ value: '电压 (V)', position: 'bottom', offset: 0, style: { fontSize: 14 } }}
           />
 
@@ -79,6 +81,7 @@ export default function DQDVChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+            tickFormatter={formatToThreeSignificant}
             label={{ value: 'dQ/dV', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 14 } }}
           />
 

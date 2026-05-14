@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import * as XLSX from 'xlsx'
-import { parseBatteryFile } from '../utils/parser'
+import { parseBatteryFile, buildWorkbookFromArrayBuffer } from '../utils/parser'
 import { detectAvailableCharts } from '../utils/chartSelector'
 import { calculateDQDV } from '../utils/dqdv'
 import { movingAverage } from '../utils/smoothing'
@@ -99,7 +98,7 @@ export default function BatteryResearchApp() {
       try {
         const binaryData = evt.target.result
         setWorkbook(binaryData)
-        const wb = XLSX.read(binaryData, { type: 'binary' })
+        const wb = buildWorkbookFromArrayBuffer(binaryData)
         const names = wb.SheetNames
         setSheetNames(names)
         if (names.length > 0) {
@@ -112,7 +111,7 @@ export default function BatteryResearchApp() {
       }
     }
     reader.onerror = () => setError('文件读取失败')
-    reader.readAsBinaryString(file)
+    reader.readAsArrayBuffer(file)
 
     setUploadKey(prev => prev + 1)
   }
@@ -124,7 +123,7 @@ export default function BatteryResearchApp() {
       <input
         key={uploadKey}
         type="file"
-        accept=".xlsx,.xls,.csv"
+        accept=".xlsx,.xls,.csv,.txt,.nda,.cex"
         onChange={handleUpload}
         style={{ marginBottom: 20 }}
       />

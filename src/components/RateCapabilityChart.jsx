@@ -5,6 +5,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
+import { formatToThreeSignificant } from '../utils/numberFormat'
 
 export default function RateCapabilityChart({ data = [] }) {
   const validData = Array.isArray(data)
@@ -64,6 +65,7 @@ export default function RateCapabilityChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+            tickFormatter={formatToThreeSignificant}
             label={{ value: '倍率 (C)', position: 'bottom', offset: 0, style: { fontSize: 14 } }}
           />
 
@@ -72,6 +74,7 @@ export default function RateCapabilityChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+            tickFormatter={formatToThreeSignificant}
             label={{ value: '容量 (mAh/g)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 14 } }}
           />
 

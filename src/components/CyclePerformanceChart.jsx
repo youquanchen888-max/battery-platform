@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import { exportPNG, exportSVG } from '../utils/exportChart'
 import { getSmartAxisDomain, getSmartTickCount } from '../utils/chartTheme'
+import { formatToThreeSignificant } from '../utils/numberFormat'
 
 export default function CyclePerformanceChart({ data = [] }) {
   const chartData = Array.isArray(data)
@@ -80,6 +81,7 @@ export default function CyclePerformanceChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+            tickFormatter={formatToThreeSignificant}
             label={{ value: '循环次数', position: 'bottom', offset: 0, style: { fontSize: 14 } }}
           />
 
@@ -91,6 +93,7 @@ export default function CyclePerformanceChart({ data = [] }) {
             axisLine={axisLine}
             tick={tickStyle}
             tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+            tickFormatter={formatToThreeSignificant}
             label={{ value: '比容量 (mAh/g)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 14 } }}
           />
 
@@ -104,6 +107,7 @@ export default function CyclePerformanceChart({ data = [] }) {
               axisLine={axisLine}
               tick={tickStyle}
               tickLine={{ stroke: '#000', strokeWidth: 1.2 }}
+              tickFormatter={formatToThreeSignificant}
               label={{ value: '库伦效率 (%)', angle: -90, position: 'insideRight', offset: 10, style: { fontSize: 14 } }}
             />
           )}
